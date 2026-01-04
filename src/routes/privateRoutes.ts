@@ -33,9 +33,9 @@ export async function privateRoutes(fastify: FastifyInstance, options: FastifyPl
         return new categoryController().deleteCategory(request, reply)
     })
 
-    // fastify.get('/transaction', async(request: FastifyRequest, reply: FastifyReply) => {
-    //     return { message: "Tela de criar transações" }
-    // })
+    fastify.get('/transaction', async(request: FastifyRequest, reply: FastifyReply) => {
+        return new transactionController().listTransaction(request, reply)
+    })
 
     fastify.post('/transaction', async(request: FastifyRequest, reply: FastifyReply) => {
         return new transactionController().createTransaction(request, reply)
