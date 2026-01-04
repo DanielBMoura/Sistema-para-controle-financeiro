@@ -40,4 +40,12 @@ export async function privateRoutes(fastify: FastifyInstance, options: FastifyPl
     fastify.post('/transaction', async(request: FastifyRequest, reply: FastifyReply) => {
         return new transactionController().createTransaction(request, reply)
     })
+
+    fastify.patch('/transaction/:idTransaction', async(request: FastifyRequest, reply: FastifyReply) => {
+        return new transactionController().updateTransaction(request, reply)
+    })
+
+    fastify.delete('/transaction/:idTransaction', async(request: FastifyRequest, reply: FastifyReply) => {
+        return new transactionController().deleteTransaction(request, reply)
+    })
 }

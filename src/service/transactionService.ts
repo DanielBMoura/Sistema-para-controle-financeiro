@@ -2,8 +2,15 @@ import { Prisma } from "@prisma/client"
 import { prismaClient } from "../../lib/index.js"
 import { transformDecimalUtil } from "../utils/transformDecimalUtil.js"
 
-interface transactionServiceProps {
-    idUser: string,
+interface UserContext {
+    idUser: string
+}
+
+interface TransactionIndentifier {
+    idTransaction: string
+}
+
+interface CreateTransaction extends UserContext {
     idCategory: string,
     type: string,
     value: string,
@@ -11,12 +18,10 @@ interface transactionServiceProps {
     description: string
 }
 
-interface listTransactionProps {
-    idUser: string
-}
+interface UpdateTransaction extends CreateTransaction, TransactionIndentifier {}
 
 class transactionService {
-    async listTransaction({idUser}: listTransactionProps){
+    async listTransaction({idUser}: UserContext){
         if (!idUser) {
             throw new Error("ERRO INTERNO")
         }
@@ -30,7 +35,7 @@ class transactionService {
         return listTransaction
     }
 
-    async createTransaction({idUser, idCategory, type, value, date, description}: transactionServiceProps) {
+    async createTransaction({idUser, idCategory, type, value, date, description}: CreateTransaction) {
         if (!idUser) {
             throw new Error("ERRO INTERNO")
         }
@@ -53,8 +58,8 @@ class transactionService {
             throw new Error("Categoria não encontrada")
         }
 
-        const valueNumber = transformDecimalUtil(value)  // Converte "value" para o tipo decimal do prisma
-        const dateCorrect = new Date(`${date}T00:00:00Z`)   // Adiciona o fuso horário
+        const valueNumber = transformDecimalUtil(value)
+        const dateCorrect = new Date(`${date}T00:00:00Z`)
 
         const createTransaction = await prismaClient.transaction.create({
             data: {
@@ -68,6 +73,88 @@ class transactionService {
         })
 
         return createTransaction
+    }
+
+    async updateTransaction({ idTransaction, idUser, idCategory, type, value, date, description }: UpdateTransaction) {
+        if (!idTransaction || !idUser) {
+            throw new Error("ERRO INTERNO")
+        }
+
+        if (!idCategory || !type || !value || !date || !description) {
+            throw new Error("Por favor, forneça todos os dados")
+        }
+
+        const transactionExist = await prismaClient.transaction.findFirst({
+            where: {
+                idTransaction,
+                idUser
+            }
+        })
+
+        if (!transactionExist) {
+            throw new Error("Transação não encontrada")
+        }
+
+        const categoryExist = await prismaClient.category.findFirst({
+            where: {
+                idUser,
+                idCategory
+            }
+        })
+
+        if (!categoryExist) {
+            throw new Error("Categoria não encontrada")
+        }
+
+        if (type !== "RECEITA" && type !== "DESPESA") {
+            throw new Error("ERRO INTERNO")
+        }
+
+        const valueNumber = transformDecimalUtil(value)
+        const dateCorrect = new Date(`${date}T00:00:00Z`)
+
+        const updateTransaction = await prismaClient.transaction.update({
+            where: {
+                idTransaction,
+                idUser
+            },
+            data: {
+                idCategory,
+                type,
+                value: valueNumber,
+                date: dateCorrect,
+                description
+            }
+        })
+
+        return updateTransaction
+
+    }
+
+    async deleteTransaction({idTransaction}: TransactionIndentifier, {idUser}: UserContext) {
+        if (!idTransaction || !idUser) {
+            throw new Error("ERRO INTERNO")
+        }
+
+        const transactionExist = await prismaClient.transaction.findFirst({
+            where: {
+                idTransaction,
+                idUser
+            }
+        })
+
+        if (!transactionExist) {
+            throw new Error("Transação não encontrada")
+        }
+
+        const deleteTransaction = await prismaClient.transaction.delete({
+            where: {
+                idTransaction,
+                idUser
+            }
+        })
+
+        return deleteTransaction
     }
 }
 

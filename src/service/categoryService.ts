@@ -41,7 +41,8 @@ class categoryService {
 
         const categoryExist = await prismaClient.category.findFirst({
             where: {
-                name
+                name,
+                idUser
             }
         })
 
